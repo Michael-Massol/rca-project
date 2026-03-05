@@ -66,6 +66,7 @@ def health():
 
 @app.route("/api/tasks", methods=["GET"])
 def list_tasks():
+    """Récupère la liste des tâches avec filtres optionnels (status, today)."""
     db = get_db()
     cur = db.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     status = request.args.get("status")
@@ -97,6 +98,7 @@ def list_tasks():
 
 @app.route("/api/tasks", methods=["POST"])
 def create_task():
+    """Crée une nouvelle tâche et invalide le cache des statistiques."""
     data = request.get_json()
     if not data or not data.get("title"):
         return jsonify({"error": "Title is required"}), 400
@@ -117,6 +119,7 @@ def create_task():
 
 @app.route("/api/tasks/<int:task_id>", methods=["PUT"])
 def update_task(task_id):
+    """Met à jour une tâche existante et invalide le cache."""
     data = request.get_json()
     db = get_db()
     cur = db.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -142,6 +145,7 @@ def update_task(task_id):
 
 @app.route("/api/tasks/<int:task_id>", methods=["DELETE"])
 def delete_task(task_id):
+    """Supprime une tâche par son ID."""
     db = get_db()
     cur = db.cursor()
     cur.execute("DELETE FROM tasks WHERE id = %s", (task_id,))
@@ -168,6 +172,7 @@ def search_tasks():
 
 @app.route("/api/stats", methods=["GET"])
 def get_stats():
+    """Récupère les statistiques de complétion des tâches (avec mise en cache Redis)."""
     r = get_redis()
     cached = r.get("stats")
     if cached:
