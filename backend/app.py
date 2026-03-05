@@ -1,27 +1,35 @@
 from models import Task  # noqa - Importation depuis models.py (fichier précédemment nommé model.py)
 import os
+import time
 from datetime import datetime, timezone
 
 from flask import Flask, jsonify, request, g
-from flask_cors import CORS # ERREUR : CORS était manquant, empêchant le frontend (port 3000) d'accéder au backend (port 8000)
+from flask_cors import CORS
 
 import psycopg2
 import psycopg2.extras
 import redis
 
 app = Flask(__name__)
-CORS(app) # ERREUR : Activation de CORS nécessaire pour autoriser les requêtes cross-origin du navigateur
+CORS(app)
 
 
-DATABASE_URL = os.environ.get("DATABASE_URL", "postgres://taskuser:taskpass@database:5432/taskdb")
+DATABASE_URL = os.environ.get("DATABASE_URL", "postgres://taskuser:taskpass@db:5432/taskdb")
 REDIS_URL = os.environ["REDIS_URL"]
 
 search_history = []
 
 def get_db():
     if "db" not in g:
-        g.db = psycopg2.connect(DATABASE_URL)
-        g.db.autocommit = True
+        # Ajout d'un retry pour laisser le temps à Postgres de démarrer dans Docker
+        for i in range(5):
+            try:
+                g.db = psycopg2.connect(DATABASE_URL)
+                g.db.autocommit = True
+                break
+            except Exception as e:
+                if i == 4: raise e
+                time.sleep(2)
     return g.db
 
 def get_redis():
@@ -66,7 +74,7 @@ def list_tasks():
     conditions = []
     params = []
     if status:
-        # ERREUR : La colonne s'appelle 'is_active' dans la DB, pas 'active'. Cela provoquait une erreur 500.
+        # Correction : le nom de la colonne dans la DB est 'is_active'
         conditions.append("is_active = true" if status == "active" else "is_active = false")
 
     if today_only:
@@ -182,7 +190,7 @@ def warmup_cache():
     except Exception as e:
         print(f"Cache warmup failed (non-critical): {e}")
 
-warmup_cache()
+# warmup_cache() # Désactivé car pose problème au démarrage dans Docker
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000, debug=True)
