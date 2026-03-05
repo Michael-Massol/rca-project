@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   db:
     image: postgres:15-alpine
@@ -17,15 +15,17 @@ services:
     image: redis:7-alpine
     ports:
       - "6379:6379"
-    depends_on:
-      - backend
+    # Correction: suppression de 'depends_on: backend' pour éviter la boucle de dépendance circulaire
 
   backend:
     build: ./backend
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: "postgres://taskuser:taskpass@database:5432/taskdb"
+      # Correction: utilisation de 'db' au lieu de 'database' pour correspondre au nom du service
+      DATABASE_URL: "postgres://taskuser:taskpass@db:5432/taskdb"
+      # Ajout: REDIS_URL est requis par app.py pour la connexion au cache
+      REDIS_URL: "redis://redis:6379/0"
     depends_on:
       - db
       - redis

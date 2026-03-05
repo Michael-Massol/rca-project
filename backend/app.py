@@ -1,4 +1,4 @@
-from models import Task  # noqa
+from models import Task  # noqa - Importation depuis models.py (fichier précédemment nommé model.py)
 import os
 from datetime import datetime, timezone
 
