@@ -3,11 +3,15 @@ import os
 from datetime import datetime, timezone
 
 from flask import Flask, jsonify, request, g
+from flask_cors import CORS # ERREUR : CORS était manquant, empêchant le frontend (port 3000) d'accéder au backend (port 8000)
+
 import psycopg2
 import psycopg2.extras
 import redis
 
 app = Flask(__name__)
+CORS(app) # ERREUR : Activation de CORS nécessaire pour autoriser les requêtes cross-origin du navigateur
+
 
 DATABASE_URL = os.environ.get("DATABASE_URL", "postgres://taskuser:taskpass@database:5432/taskdb")
 REDIS_URL = os.environ["REDIS_URL"]
@@ -62,7 +66,9 @@ def list_tasks():
     conditions = []
     params = []
     if status:
-        conditions.append("active = true" if status == "active" else "active = false")
+        # ERREUR : La colonne s'appelle 'is_active' dans la DB, pas 'active'. Cela provoquait une erreur 500.
+        conditions.append("is_active = true" if status == "active" else "is_active = false")
+
     if today_only:
         conditions.append("DATE(created_at) = DATE(%s)")
         params.append(datetime.now())
