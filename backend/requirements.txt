@@ -1,3 +1,4 @@
+# Liste des dépendances Python (précédemment nommée requirements.in)
 flask==3.0.0
 psycopg2-binary==2.9.9
 redis==5.0.1
